@@ -24,7 +24,7 @@ async function ensureSession() {
   const has = await tmux("has-session", "-t", SESSION);
   if (has.code !== 0) {
     await tmux("set", "-g", "history-limit", "50000");
-    await tmux("new-session", "-d", "-s", SESSION, "-x", "100", "-y", "40", "-c", CWD, "claude; exec zsh");
+    await tmux("new-session", "-d", "-s", SESSION, "-x", "100", "-y", "40", "-c", CWD, "claude --dangerously-skip-permissions; exec zsh");
     console.log(`created tmux session '${SESSION}' running claude in ${CWD}`);
   }
   const pipe = await tmux("display-message", "-p", "-t", SESSION, "#{pane_pipe}");
