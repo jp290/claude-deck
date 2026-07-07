@@ -44,6 +44,9 @@
     background: #262626; font-size: 18px; touch-action: manipulation; user-select: none; }
   #mic:active { background: #3a3a3a; }
   #live.on { background: #e0af68; color: #10131c; border-color: #e0af68; }
+  #livein { flex: 1; height: 42px; padding: 0 12px; border-radius: 12px;
+    border: 1px solid #e0af68; background: #262626; color: #e0af68;
+    font-size: 16px; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -68,6 +71,10 @@
       <button class="chip" data-cmd="/gosharp">gosharp</button>
       <button class="chip" data-cmd="/sharpen3">sharpen3</button>
       <button class="chip" data-cmd="/gosharp3">gosharp3</button>
+    </div>
+    <div id="livebar" class="row" style="display:none">
+      <input id="livein" type="text" placeholder="Live → tippt direkt ins Terminal"
+        autocomplete="off" autocapitalize="none" spellcheck="false">
     </div>
     <div id="inputrow">
       <button id="mic">🎤</button>

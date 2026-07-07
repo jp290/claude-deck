@@ -63,6 +63,7 @@ async function sendText(text: string, submit: boolean) {
 type WSData = { queue: Uint8Array[]; ready: boolean };
 const clients = new Set<ServerWebSocket<WSData>>();
 let offset = 0;
+let inputChain: Promise<unknown> = Promise.resolve();
 
 function broadcast(chunk: Uint8Array) {
   for (const ws of clients) {
@@ -147,12 +148,13 @@ Bun.serve<WSData>({
     close(ws) {
       clients.delete(ws);
     },
-    // live input: client sends raw keystroke bytes, forwarded verbatim to the pane
-    async message(_ws, msg) {
+    // live input: client sends raw keystroke bytes, forwarded verbatim to the pane.
+    // serialized through a promise chain — concurrent send-keys spawns reorder keystrokes
+    message(_ws, msg) {
       const bytes = typeof msg === "string" ? new TextEncoder().encode(msg) : new Uint8Array(msg);
       if (bytes.length === 0 || bytes.length > 1024) return;
       const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0"));
-      await tmux("send-keys", "-t", SESSION, "-H", ...hex);
+      inputChain = inputChain.then(() => tmux("send-keys", "-t", SESSION, "-H", ...hex)).catch(() => {});
     },
   },
 });

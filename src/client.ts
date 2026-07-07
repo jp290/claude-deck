@@ -71,26 +71,51 @@ function connect() {
 }
 connect();
 
-// --- live input mode: type straight into the terminal (slash menus, dialogs) ---
-const live = $("live");
+// --- live input mode: a real visible input relays every keystroke to the pane ---
+// (xterm's hidden helper textarea is unreliable on iOS: keyboard often won't open,
+//  autocorrect swallows input — so we never use it for typing)
+const live = $("live"), livebar = $("livebar"), livein = $("livein") as HTMLInputElement;
 let liveOn = false;
-term.options.disableStdin = true;
-term.onData((d) => {
-  if (liveOn && ws?.readyState === WebSocket.OPEN) ws.send(new TextEncoder().encode(d));
-});
+const sentLog: string[] = [];
+(window as any).__sent = sentLog;
+function sendRaw(s: string) {
+  sentLog.push(s);
+  if (ws?.readyState === WebSocket.OPEN) ws.send(new TextEncoder().encode(s));
+}
 live.onclick = () => {
   liveOn = !liveOn;
   live.classList.toggle("on", liveOn);
-  term.options.disableStdin = !liveOn;
-  term.textarea!.readOnly = !liveOn;
-  if (liveOn) {
-    term.textarea!.removeAttribute("inputmode");
-    term.focus();
-  } else {
-    term.textarea!.setAttribute("inputmode", "none");
-    term.textarea!.blur();
-  }
+  livebar.style.display = liveOn ? "flex" : "none";
+  if (liveOn) livein.focus();
+  else livein.blur();
 };
+const KEYMAP: Record<string, string> = {
+  Enter: "\r", Escape: "\x1b", Backspace: "\x7f", Tab: "\t",
+  ArrowUp: "\x1b[A", ArrowDown: "\x1b[B", ArrowRight: "\x1b[C", ArrowLeft: "\x1b[D",
+};
+livein.addEventListener("keydown", (e) => {
+  if (e.isComposing) return;
+  const seq = KEYMAP[e.key];
+  if (seq) {
+    e.preventDefault();
+    sendRaw(seq);
+  }
+});
+livein.addEventListener("beforeinput", (e) => {
+  if (e.inputType === "insertCompositionText") return; // not cancelable; handled on compositionend
+  if (e.inputType === "insertText" || e.inputType === "insertFromPaste") {
+    e.preventDefault();
+    if (e.data) sendRaw(e.data);
+  }
+});
+livein.addEventListener("compositionend", (e) => {
+  if (e.data) sendRaw(e.data);
+  livein.value = "";
+});
+livein.addEventListener("input", () => {
+  // sweeper: the field must stay empty so autocorrect has nothing to rewrite
+  if (livein.value) livein.value = "";
+});
 
 // --- jump-to-bottom pill ---
 function updateJump() {
