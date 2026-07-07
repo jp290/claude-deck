@@ -54,9 +54,10 @@ window.visualViewport?.addEventListener("resize", onViewportChange);
 vfit();
 fit.fit();
 
-// --- websocket stream ---
+// --- websocket stream (server→client: pane output; client→server: live keystrokes) ---
+let ws: WebSocket | null = null;
 function connect() {
-  const ws = new WebSocket(`ws://${location.host}/ws`);
+  ws = new WebSocket(`ws://${location.host}/ws`);
   ws.binaryType = "arraybuffer";
   ws.onopen = () => {
     dot.className = "on";
@@ -69,6 +70,27 @@ function connect() {
   };
 }
 connect();
+
+// --- live input mode: type straight into the terminal (slash menus, dialogs) ---
+const live = $("live");
+let liveOn = false;
+term.options.disableStdin = true;
+term.onData((d) => {
+  if (liveOn && ws?.readyState === WebSocket.OPEN) ws.send(new TextEncoder().encode(d));
+});
+live.onclick = () => {
+  liveOn = !liveOn;
+  live.classList.toggle("on", liveOn);
+  term.options.disableStdin = !liveOn;
+  term.textarea!.readOnly = !liveOn;
+  if (liveOn) {
+    term.textarea!.removeAttribute("inputmode");
+    term.focus();
+  } else {
+    term.textarea!.setAttribute("inputmode", "none");
+    term.textarea!.blur();
+  }
+};
 
 // --- jump-to-bottom pill ---
 function updateJump() {
