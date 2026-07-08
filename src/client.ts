@@ -86,8 +86,8 @@ live.onclick = () => {
   liveOn = !liveOn;
   live.classList.toggle("on", liveOn);
   livebar.style.display = liveOn ? "flex" : "none";
-  if (liveOn) livein.focus();
-  else livein.blur();
+  // reveal the field but don't focus it — tapping it is what should open the keyboard
+  if (!liveOn) livein.blur();
 };
 const KEYMAP: Record<string, string> = {
   Enter: "\r", Escape: "\x1b", Backspace: "\x7f", Tab: "\t",
