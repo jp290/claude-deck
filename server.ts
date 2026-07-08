@@ -75,7 +75,11 @@ function broadcast(chunk: Uint8Array) {
 async function poll() {
   try {
     const size = (await stat(STREAM)).size;
-    if (size < offset) offset = 0;
+    if (size < offset) {
+      offset = 0;
+      // stream was truncated (session recreated) — clear stale scrollback on clients still connected
+      broadcast(new TextEncoder().encode("\x1b[3J\x1b[2J\x1b[H"));
+    }
     if (size > offset) {
       const buf = await Bun.file(STREAM).slice(offset, size).arrayBuffer();
       offset = size;
@@ -96,6 +100,9 @@ const json = (body: unknown, status = 200) =>
 await ensureSession();
 offset = existsSync(STREAM) ? (await stat(STREAM)).size : 0;
 setInterval(poll, 100);
+// self-heal: if the pane ever dies (crash, accidental kill-session), recreate it —
+// ensureSession() is a cheap no-op (two tmux queries) when everything is already healthy
+setInterval(() => void ensureSession().catch(() => {}), 2000);
 
 Bun.serve<WSData>({
   hostname: HOST,
