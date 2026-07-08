@@ -2,6 +2,9 @@ import { stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import type { ServerWebSocket } from "bun";
 
+// Defaults to localhost — nothing is network-reachable until you explicitly set DECK_HOST
+// (e.g. your Tailscale IP via `tailscale ip -4`). This spawns a --dangerously-skip-permissions
+// shell; don't default that to any bind address broader than loopback.
 const HOST = process.env.DECK_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.DECK_PORT ?? 8788);
 const SOCK = "claudedeck";

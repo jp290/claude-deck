@@ -2,7 +2,15 @@
 
 Mobile remote control for a Claude Code session — native scrollback on iPhone, voice via iOS dictation, /sharpen & /gosharp prefix buttons, and a live-input mode for typing straight into the pane (slash-menus, TUI dialogs).
 
-**URL:** http://127.0.0.1:8788 (Tailnet only)
+**Quickstart:**
+```sh
+bun install
+bun run build
+DECK_HOST=$(tailscale ip -4) bun server.ts   # or your LAN IP; defaults to 127.0.0.1 (loopback only)
+```
+Then open `http://<that-ip>:8788` from your phone (same Tailscale network / LAN).
+
+⚠️ This spawns `claude --dangerously-skip-permissions` and exposes it with **no authentication** beyond whatever network you bind it to — see Known Limits before setting `DECK_HOST` to anything broader than a private Tailscale/LAN address.
 
 ## Architecture — tmux without attach
 
@@ -26,7 +34,9 @@ tmux -L claudedeck kill-session -t deck && rm stream.raw                        
 bun run build                                                                                         # rebuild client after editing src/client.ts
 ```
 
-Env: `DECK_HOST` (default 127.0.0.1), `DECK_PORT` (8788), `DECK_CWD` (claude working dir, default ~).
+Env: `DECK_HOST` (default `127.0.0.1` — loopback only, set to your Tailscale/LAN IP to reach it from another device), `DECK_PORT` (8788), `DECK_CWD` (claude working dir, default `$HOME`).
+
+The four command chips (`/sharpen`, `/gosharp`, …) are this author's own custom Claude Code skills — edit `CMDS` in `src/client.ts` and the matching buttons in `public/index.html` to swap in your own, or remove them.
 
 ## Pinned: xterm 5.5.0, NOT 6.x
 

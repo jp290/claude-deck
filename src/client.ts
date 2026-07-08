@@ -18,7 +18,6 @@ term.open($("term"));
 // read-only view: never pop the iOS keyboard when tapping/scrolling the terminal
 term.textarea!.readOnly = true;
 term.textarea!.setAttribute("inputmode", "none");
-(window as any).term = term;
 
 function post(path: string, body: unknown) {
   return fetch(path, {
@@ -77,10 +76,7 @@ connect();
 //  autocorrect swallows input — so we never use it for typing)
 const live = $("live"), livebar = $("livebar"), livein = $("livein") as HTMLInputElement;
 let liveOn = false;
-const sentLog: string[] = [];
-(window as any).__sent = sentLog;
 function sendRaw(s: string) {
-  sentLog.push(s);
   if (ws?.readyState === WebSocket.OPEN) ws.send(new TextEncoder().encode(s));
 }
 live.onclick = () => {
@@ -133,6 +129,8 @@ ta.addEventListener("focus", () => { keys.style.display = "none"; });
 ta.addEventListener("blur", () => { keys.style.display = "flex"; });
 
 // --- command prefix chips ---
+// these are examples of this author's own custom Claude Code skills — swap in your own
+// slash commands (or none) in both this array and the matching buttons in index.html
 const CMDS = ["/sharpen", "/gosharp", "/sharpen3", "/gosharp3"];
 function currentPrefix(): string | null {
   for (const c of CMDS) if (ta.value === c || ta.value.startsWith(c + " ")) return c;
