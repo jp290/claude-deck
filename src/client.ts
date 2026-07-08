@@ -76,8 +76,13 @@ connect();
 //  autocorrect swallows input — so we never use it for typing)
 const live = $("live"), livebar = $("livebar"), livein = $("livein") as HTMLInputElement;
 let liveOn = false;
+const MAX_CHUNK = 1000; // stay under the server's 1024-byte cap per WS message
 function sendRaw(s: string) {
-  if (ws?.readyState === WebSocket.OPEN) ws.send(new TextEncoder().encode(s));
+  if (ws?.readyState !== WebSocket.OPEN) return;
+  const bytes = new TextEncoder().encode(s);
+  // splitting mid-codepoint is safe: tmux relays raw bytes to the pty, which
+  // reassembles UTF-8 the same way it would from fast individual keystrokes
+  for (let i = 0; i < bytes.length; i += MAX_CHUNK) ws.send(bytes.slice(i, i + MAX_CHUNK));
 }
 live.onclick = () => {
   liveOn = !liveOn;
@@ -158,15 +163,22 @@ for (const el of document.querySelectorAll<HTMLButtonElement>("#bar [data-cmd]")
 // voice = iOS keyboard dictation: focus the input so the keyboard (with its mic key) opens
 $("mic").onclick = () => ta.focus();
 
+function flashSendError() {
+  send.style.background = "#f85149"; // reuses the existing "disconnected" red
+  setTimeout(() => { send.style.background = ""; }, 1200);
+}
 send.onclick = async () => {
   const text = ta.value.trim();
   if (!text || send.disabled) return;
   send.disabled = true;
   try {
-    await post("/send", { text, submit: true });
+    const res = await post("/send", { text, submit: true });
+    if (!res.ok) throw new Error(`send failed: ${res.status}`);
     ta.value = "";
     updateChips();
     term.scrollToBottom();
+  } catch {
+    flashSendError(); // text stays in the box so nothing typed is silently lost
   } finally {
     send.disabled = false;
   }
