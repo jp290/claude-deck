@@ -37,7 +37,6 @@ function vfit() {
 }
 let lastCols = 0, lastRows = 0;
 function sendResize() {
-  fit.fit();
   if (term.cols === lastCols && term.rows === lastRows) return;
   lastCols = term.cols;
   lastRows = term.rows;
@@ -46,8 +45,10 @@ function sendResize() {
 let resizeTimer: ReturnType<typeof setTimeout>;
 function onViewportChange() {
   vfit();
+  fit.fit(); // resize the visual terminal immediately — never let it lag the flex box,
+             // or it can paint over #bar (both are positioned; source order won't save it)
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(sendResize, 500);
+  resizeTimer = setTimeout(sendResize, 500); // only the network reflow of the tmux pane is debounced
 }
 window.addEventListener("resize", onViewportChange);
 window.visualViewport?.addEventListener("resize", onViewportChange);

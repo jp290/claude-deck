@@ -14,13 +14,13 @@
   body { font-family: ui-monospace, Menlo, Consolas, monospace; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
   #app { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; }
   #termwrap { position: relative; flex: 1; min-height: 0; padding: 4px 0 0 6px;
-    user-select: none; -webkit-user-select: none; }
+    overflow: hidden; user-select: none; -webkit-user-select: none; }
   #term { height: 100%; }
   .xterm .xterm-viewport { -webkit-overflow-scrolling: touch; }
   #jump { position: absolute; display: none; bottom: 12px; right: 14px; z-index: 5;
     width: 44px; height: 44px; border-radius: 50%; border: 1px solid #444;
     background: #222d; color: #ddd; font-size: 18px; align-items: center; justify-content: center; }
-  #bar { flex-shrink: 0; background: #1c1c1c; border-top: 1px solid #2a2a2a;
+  #bar { position: relative; z-index: 2; flex-shrink: 0; background: #1c1c1c; border-top: 1px solid #2a2a2a;
     padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
   .row { display: flex; gap: 7px; align-items: center; }
   .row button { flex: 1; height: 42px; border-radius: 10px; border: 1px solid #333;
